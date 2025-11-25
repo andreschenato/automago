@@ -1,11 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automago - Analisador Léxico</title>
 </head>
+
 <body>
-    {{.Message}}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>State</th>
+                {{range .GetAlphabet}}<th>{{printf "%c" .}}</th>{{end}}
+            </tr>
+        </thead>
+        <tbody>
+            {{$aut := .}}
+            {{range .ListStates}}
+            {{$st := .}}
+            <tr>
+                <td>q{{$st}} {{if $aut.IsFinal $st}}(F){{end}}</td>
+                {{range $char := $aut.GetAlphabet}}
+                <td>{{$aut.GetTransitionDisplay $st $char}}</td>
+                {{end}}
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
 </body>
+
 </html>

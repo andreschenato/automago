@@ -7,7 +7,13 @@ import (
 	"net/http"
 )
 
+var automaton *Automaton
+
 func main() {
+	automaton = NewAutomaton()
+
+	automaton.BuildFromWords([]string{"testing", "nesting"})
+
 	http.HandleFunc("/", index)
 
 	fmt.Println("http://localhost:8080")
@@ -21,5 +27,5 @@ func index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl.Execute(w, struct{ Message string }{Message: "Automago"})
+	tmpl.Execute(w, automaton)
 }
