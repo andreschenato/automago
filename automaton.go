@@ -71,3 +71,21 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 	}
 	return "-"
 }
+
+func (a *Automaton) Accept(word string) bool {
+	currentState := 0
+	
+	for _, char := range word {
+		if transitions, ok := a.TransitionTable[currentState]; ok {
+			if nextState, exists := transitions[char]; exists {
+				currentState = nextState
+			} else {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	
+	return a.IsFinal(currentState)
+}
