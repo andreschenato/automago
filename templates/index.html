@@ -205,7 +205,7 @@
                 {{range .ListStates}}
                 {{$st := .}}
                 <tr id="row-q{{$st}}" class="{{if $aut.IsFinal $st}}final-state{{end}}">
-                    <td>q{{$st}} {{if $aut.IsFinal $st}}(F){{end}}</td>
+                    <td>{{if $aut.IsInitial $st}}-> {{end}}q{{$st}}{{if $aut.IsFinal $st}}*{{end}}</td>
                     {{range $char := $aut.GetAlphabet}}
                     <td>{{$aut.GetTransitionDisplay $st $char}}</td>
                     {{end}}

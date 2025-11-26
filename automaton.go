@@ -85,6 +85,10 @@ func (a *Automaton) Reset() {
 	a.CurrentState = 0
 }
 
+func (a *Automaton) IsInitial(state int) bool {
+	return state == 0
+}
+
 func (a *Automaton) IsFinal(state int) bool {
 	return a.FinalStates[state]
 }
