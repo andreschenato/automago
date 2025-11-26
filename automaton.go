@@ -74,7 +74,7 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 
 func (a *Automaton) Accept(word string) bool {
 	currentState := 0
-
+	
 	for _, char := range word {
 		if transitions, ok := a.TransitionTable[currentState]; ok {
 			if nextState, exists := transitions[char]; exists {
@@ -86,6 +86,6 @@ func (a *Automaton) Accept(word string) bool {
 			return false
 		}
 	}
-
+	
 	return a.IsFinal(currentState)
 }

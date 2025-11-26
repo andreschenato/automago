@@ -9,7 +9,7 @@
 
 <body>
     <h1>Automago - Analisador Léxico</h1>
-
+    
     <div style="margin-bottom: 20px;">
         <h2>Testar Palavra</h2>
         <input type="text" id="wordInput" placeholder="Digite uma palavra" />
@@ -43,7 +43,7 @@
         function testWord() {
             const word = document.getElementById('wordInput').value;
             const resultDiv = document.getElementById('result');
-
+            
             if (!word) {
                 resultDiv.textContent = 'Por favor, digite uma palavra';
                 resultDiv.style.color = 'orange';
@@ -57,23 +57,23 @@
                 },
                 body: JSON.stringify({ word: word })
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.accepted) {
-                        resultDiv.textContent = `"${data.word}" é ACEITA pelo autômato ✓`;
-                        resultDiv.style.color = 'green';
-                    } else {
-                        resultDiv.textContent = `"${data.word}" é REJEITADA pelo autômato ✗`;
-                        resultDiv.style.color = 'red';
-                    }
-                })
-                .catch(error => {
-                    resultDiv.textContent = 'Erro ao testar palavra: ' + error;
+            .then(response => response.json())
+            .then(data => {
+                if (data.accepted) {
+                    resultDiv.textContent = `"${data.word}" é ACEITA pelo autômato ✓`;
+                    resultDiv.style.color = 'green';
+                } else {
+                    resultDiv.textContent = `"${data.word}" é REJEITADA pelo autômato ✗`;
                     resultDiv.style.color = 'red';
-                });
+                }
+            })
+            .catch(error => {
+                resultDiv.textContent = 'Erro ao testar palavra: ' + error;
+                resultDiv.style.color = 'red';
+            });
         }
 
-        document.getElementById('wordInput').addEventListener('keypress', function (e) {
+        document.getElementById('wordInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 testWord();
             }
