@@ -3,80 +3,299 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Automago - Analisador Léxico</title>
+    <title>Lexical Analyzer - Automaton</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #eef1f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .left-panel {
+            flex: 1;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            flex: 2;
+            max-width: 800px;
+            overflow: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #3498db;
+        }
+
+        button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #34495e;
+        }
+
+        .monitor {
+            text-align: center;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .state-big {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3498db;
+            display: block;
+        }
+
+        .msg-status {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        #historyList {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .bg-accepted {
+            background-color: #27ae60;
+        }
+
+        .bg-rejected {
+            background-color: #c0392b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th,
+        td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+
+        .active-row {
+            background-color: #fff3cd !important;
+            transition: background 0.1s;
+        }
+
+        .final-state td:first-child {
+            border-left: 4px solid #27ae60;
+            font-weight: bold;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Automago - Analisador Léxico</h1>
-    
-    <div style="margin-bottom: 20px;">
-        <h2>Testar Palavra</h2>
-        <input type="text" id="wordInput" placeholder="Digite uma palavra" />
-        <button onclick="testWord()">Testar</button>
-        <div id="result" style="margin-top: 10px; font-weight: bold;"></div>
+
+    <div class="left-panel">
+        <div class="card">
+            <h2>Configurar Linguagem</h2>
+            <form action="/api/configure" method="POST">
+                <input type="text" name="words" value="{{range .AcceptedWords}}{{.}} {{end}}"
+                    placeholder="Ex: uri if while">
+                <button type="submit">Construir Autômato</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Testar palavra</h2>
+            <input type="text" id="inputMain" placeholder="Type here..." autocomplete="off" autofocus>
+
+            <div class="monitor">
+                <span style="font-size: 0.8rem; text-transform: uppercase;">Estado Atual</span>
+                <span id="stateDisplay" class="state-big">q0</span>
+                <span id="msgDisplay" class="msg-status">Aguardando...</span>
+            </div>
+        </div>
+
+        <div class="card" style="flex:1; overflow: hidden; display: flex; flex-direction: column;">
+            <h2>History</h2>
+            <ul id="historyList"></ul>
+        </div>
     </div>
 
-    <h2>Tabela de Transições</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>State</th>
-                {{range .GetAlphabet}}<th>{{printf "%c" .}}</th>{{end}}
-            </tr>
-        </thead>
-        <tbody>
-            {{$aut := .}}
-            {{range .ListStates}}
-            {{$st := .}}
-            <tr>
-                <td>q{{$st}} {{if $aut.IsFinal $st}}(F){{end}}</td>
-                {{range $char := $aut.GetAlphabet}}
-                <td>{{$aut.GetTransitionDisplay $st $char}}</td>
+    <div class="right-panel">
+        <h2>Tabela de Transições</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>State</th>
+                    {{range .GetAlphabet}}<th>{{printf "%c" .}}</th>{{end}}
+                </tr>
+            </thead>
+            <tbody>
+                {{$aut := .}}
+                {{range .ListStates}}
+                {{$st := .}}
+                <tr id="row-q{{$st}}" class="{{if $aut.IsFinal $st}}final-state{{end}}">
+                    <td>q{{$st}} {{if $aut.IsFinal $st}}(F){{end}}</td>
+                    {{range $char := $aut.GetAlphabet}}
+                    <td>{{$aut.GetTransitionDisplay $st $char}}</td>
+                    {{end}}
+                </tr>
                 {{end}}
-            </tr>
-            {{end}}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 
     <script>
-        function testWord() {
-            const word = document.getElementById('wordInput').value;
-            const resultDiv = document.getElementById('result');
-            
-            if (!word) {
-                resultDiv.textContent = 'Por favor, digite uma palavra';
-                resultDiv.style.color = 'orange';
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('inputMain');
+            const stateDisplay = document.getElementById('stateDisplay');
+            const msgDisplay = document.getElementById('msgDisplay');
+            const historyList = document.getElementById('historyList');
 
-            fetch('/api/test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ word: word })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.accepted) {
-                    resultDiv.textContent = `"${data.word}" é ACEITA pelo autômato ✓`;
-                    resultDiv.style.color = 'green';
-                } else {
-                    resultDiv.textContent = `"${data.word}" é REJEITADA pelo autômato ✗`;
-                    resultDiv.style.color = 'red';
+            function highlightRow(state) {
+                document.querySelectorAll('tr').forEach(r => r.classList.remove('active-row'));
+                if (state !== -1) {
+                    const row = document.getElementById('row-q' + state);
+                    if (row) {
+                        row.classList.add('active-row');
+                        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 }
-            })
-            .catch(error => {
-                resultDiv.textContent = 'Erro ao testar palavra: ' + error;
-                resultDiv.style.color = 'red';
-            });
-        }
-
-        document.getElementById('wordInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                testWord();
             }
+
+            function addToHistory(token, status) {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                const badgeClass = status === 'accepted' ? 'bg-accepted' : 'bg-rejected';
+                const badgeText = status === 'accepted' ? 'ACCEPTED' : 'REJECTED';
+
+                li.innerHTML = `<strong>${token}</strong> <span class="badge ${badgeClass}">${badgeText}</span>`;
+                historyList.prepend(li);
+            }
+
+            input.addEventListener('keydown', function (e) {
+                const key = e.key;
+
+                if (key === " ") {
+                    e.preventDefault();
+                    const token = input.value;
+
+                    if (token.trim() === "") return;
+
+                    const formData = new FormData();
+                    formData.append('action', 'validate');
+                    formData.append('token', token);
+
+                    fetch('/api/process', { method: 'POST', body: formData })
+                        .then(res => res.json())
+                        .then(data => {
+                            addToHistory(token, data.status);
+                            input.value = "";
+                            stateDisplay.innerText = "q0";
+                            msgDisplay.innerText = "Aguardando...";
+                            highlightRow(0);
+                        })
+                        .catch(err => console.error("Fetch error:", err));
+                    return;
+                }
+
+                if (key === "Backspace") {
+                    setTimeout(() => {
+                        if (input.value === "") {
+                            fetch('/api/reset').then(() => {
+                                stateDisplay.innerText = "q0";
+                                highlightRow(0);
+                            });
+                        }
+                    }, 10);
+                }
+
+                if (key.length === 1 && key.match(/[a-z]/i)) {
+                    const formData = new FormData();
+                    formData.append('action', 'step');
+                    formData.append('char', key);
+
+                    fetch('/api/process', { method: 'POST', body: formData })
+                        .then(res => res.json())
+                        .then(data => {
+                            const stLabel = data.state === -1 ? "ERR" : "q" + data.state;
+                            stateDisplay.innerText = stLabel;
+                            highlightRow(data.state);
+                        });
+                }
+            });
+
+            highlightRow(0);
         });
     </script>
 </body>

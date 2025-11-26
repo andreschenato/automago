@@ -8,6 +8,7 @@ type Automaton struct {
 	FinalStates     map[int]bool
 	ErrorState      int
 	TotalStates     int
+	AcceptedWords   []string
 }
 
 func NewAutomaton() *Automaton {
@@ -21,6 +22,7 @@ func NewAutomaton() *Automaton {
 }
 
 func (a *Automaton) BuildFromWords(words []string) {
+	a.AcceptedWords = words
 	a.TransitionTable = make(map[int]map[rune]int)
 	a.FinalStates = make(map[int]bool)
 	a.TotalStates = 1
@@ -47,6 +49,42 @@ func (a *Automaton) BuildFromWords(words []string) {
 	}
 }
 
+func (a *Automaton) Step(char rune) int {
+	if a.CurrentState == a.ErrorState {
+		return a.ErrorState
+	}
+
+	if transitions, ok := a.TransitionTable[a.CurrentState]; ok {
+		if newState, exists := transitions[char]; exists {
+			a.CurrentState = newState
+			return newState
+		}
+	}
+
+	a.CurrentState = a.ErrorState
+	return a.ErrorState
+}
+
+func (a *Automaton) SimulateValidation(word string) bool {
+	state := 0
+	for _, char := range word {
+		if transitions, ok := a.TransitionTable[state]; ok {
+			if newState, exists := transitions[char]; exists {
+				state = newState
+			} else {
+				return false
+			}
+		} else {
+			return false
+		}
+	}
+	return a.IsFinal(state)
+}
+
+func (a *Automaton) Reset() {
+	a.CurrentState = 0
+}
+
 func (a *Automaton) IsFinal(state int) bool {
 	return a.FinalStates[state]
 }
@@ -70,22 +108,4 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 		}
 	}
 	return "-"
-}
-
-func (a *Automaton) Accept(word string) bool {
-	currentState := 0
-	
-	for _, char := range word {
-		if transitions, ok := a.TransitionTable[currentState]; ok {
-			if nextState, exists := transitions[char]; exists {
-				currentState = nextState
-			} else {
-				return false
-			}
-		} else {
-			return false
-		}
-	}
-	
-	return a.IsFinal(currentState)
 }
