@@ -8,6 +8,16 @@
 </head>
 
 <body>
+    <h1>Automago - Analisador Léxico</h1>
+
+    <div style="margin-bottom: 20px;">
+        <h2>Testar Palavra</h2>
+        <input type="text" id="wordInput" placeholder="Digite uma palavra" />
+        <button onclick="testWord()">Testar</button>
+        <div id="result" style="margin-top: 10px; font-weight: bold;"></div>
+    </div>
+
+    <h2>Tabela de Transições</h2>
     <table border="1">
         <thead>
             <tr>
@@ -29,31 +39,43 @@
         </tbody>
     </table>
 
-    <h3>Input Monitor</h3>
-    <input type="text" id="inputMain" placeholder="Type here..." autofocus>
-    <div id="statusDisplay">q0</div>
-
     <script>
-        const input = document.getElementById('inputMain');
-        const display = document.getElementById('statusDisplay');
+        function testWord() {
+            const word = document.getElementById('wordInput').value;
+            const resultDiv = document.getElementById('result');
 
-        input.addEventListener('keydown', function (e) {
-            if (e.key === "Backspace") {
-                fetch('/reset').then(() => display.innerText = "q0");
+            if (!word) {
+                resultDiv.textContent = 'Por favor, digite uma palavra';
+                resultDiv.style.color = 'orange';
                 return;
             }
 
-            if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
-                const formData = new FormData();
-                formData.append('char', e.key);
+            fetch('/api/test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ word: word })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.accepted) {
+                        resultDiv.textContent = `"${data.word}" é ACEITA pelo autômato ✓`;
+                        resultDiv.style.color = 'green';
+                    } else {
+                        resultDiv.textContent = `"${data.word}" é REJEITADA pelo autômato ✗`;
+                        resultDiv.style.color = 'red';
+                    }
+                })
+                .catch(error => {
+                    resultDiv.textContent = 'Erro ao testar palavra: ' + error;
+                    resultDiv.style.color = 'red';
+                });
+        }
 
-                fetch('/process', { method: 'POST', body: formData })
-                    .then(res => res.json())
-                    .then(data => {
-                        display.innerText = (data.state === -1)
-                            ? "ERROR"
-                            : "q" + data.state;
-                    });
+        document.getElementById('wordInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                testWord();
             }
         });
     </script>

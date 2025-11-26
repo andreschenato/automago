@@ -21,10 +21,7 @@ func main() {
 	automaton.BuildFromWords([]string{"testing", "nesting"})
 
 	http.HandleFunc("/", index)
-	http.HandleFunc("/process", process)
-	http.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
-		automaton.Reset()
-	})
+	http.HandleFunc("/api/test", testWord)
 
 	fmt.Println("http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -40,21 +37,28 @@ func index(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, automaton)
 }
 
-func process(w http.ResponseWriter, r *http.Request) {
-	charStr := r.FormValue("char")
-	resp := ProcessResponse{}
-
-	if len(charStr) > 0 {
-		r := rune(charStr[0])
-		automaton.Step(r)
+func testWord(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
-	resp.State = automaton.CurrentState
-	resp.Message = fmt.Sprintf("Current State: q%d", resp.State)
-	if resp.State == -1 {
-		resp.Message = "Error State"
+	var req struct {
+		Word string `json:"word"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	accepted := automaton.Accept(req.Word)
+
+	response := map[string]interface{}{
+		"word":     req.Word,
+		"accepted": accepted,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(response)
 }

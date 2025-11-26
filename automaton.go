@@ -72,19 +72,20 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 	return "-"
 }
 
-func (a *Automaton) Step(char rune) int {
-	if a.CurrentState == a.ErrorState {
-		return a.ErrorState
-	}
+func (a *Automaton) Accept(word string) bool {
+	currentState := 0
 
-	if transitions, ok := a.TransitionTable[a.CurrentState]; ok {
-		if newState, exists := transitions[char]; exists {
-			a.CurrentState = newState
-			return newState
+	for _, char := range word {
+		if transitions, ok := a.TransitionTable[currentState]; ok {
+			if nextState, exists := transitions[char]; exists {
+				currentState = nextState
+			} else {
+				return false
+			}
+		} else {
+			return false
 		}
 	}
-	a.CurrentState = a.ErrorState
-	return a.ErrorState
-}
 
-func (a *Automaton) Reset() { a.CurrentState = 0 }
+	return a.IsFinal(currentState)
+}
