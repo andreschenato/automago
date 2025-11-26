@@ -26,7 +26,6 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/api/configure", configure)
 	http.HandleFunc("/api/process", process)
-	http.HandleFunc("/api/reset", reset)
 
 	fmt.Println("http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -63,15 +62,6 @@ func configure(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func reset(w http.ResponseWriter, r *http.Request) {
-	automaton.Reset()
-	json.NewEncoder(w).Encode(ProcessResponse{
-		State:   0,
-		Message: "Ready",
-		Status:  "start",
-	})
-}
-
 func process(w http.ResponseWriter, r *http.Request) {
 	action := r.FormValue("action")
 	resp := ProcessResponse{}
@@ -92,24 +82,23 @@ func process(w http.ResponseWriter, r *http.Request) {
 		resp.State = 0
 
 	} else {
-		charStr := r.FormValue("char")
-		if len(charStr) > 0 {
-			r := rune(charStr[0])
-			if !unicode.IsLower(r) {
-				automaton.CurrentState = automaton.ErrorState
+		currentToken := r.FormValue("token")
+
+		if currentToken == "" {
+			resp.State = 0
+			resp.Message = "Aguardando..."
+		} else {
+			finalState := automaton.GetStateForString(currentToken)
+			resp.State = finalState
+
+			if resp.State == -1 {
+				resp.Message = "ERRO"
 			} else {
-				automaton.Step(r)
+				resp.Message = fmt.Sprintf("State q%d", resp.State)
 			}
 		}
 
-		resp.State = automaton.CurrentState
 		resp.Status = "processing"
-
-		if resp.State == -1 {
-			resp.Message = "Error"
-		} else {
-			resp.Message = fmt.Sprintf("State q%d", resp.State)
-		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

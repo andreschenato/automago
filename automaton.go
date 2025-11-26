@@ -113,3 +113,19 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 	}
 	return "-"
 }
+
+func (a *Automaton) GetStateForString(word string) int {
+	state := 0
+	for _, char := range word {
+		if transitions, ok := a.TransitionTable[state]; ok {
+			if newState, exists := transitions[char]; exists {
+				state = newState
+			} else {
+				return a.ErrorState
+			}
+		} else {
+			return a.ErrorState
+		}
+	}
+	return state
+}

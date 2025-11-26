@@ -244,12 +244,9 @@
             }
 
             input.addEventListener('keydown', function (e) {
-                const key = e.key;
-
-                if (key === " ") {
+                if (e.key === " ") {
                     e.preventDefault();
                     const token = input.value;
-
                     if (token.trim() === "") return;
 
                     const formData = new FormData();
@@ -266,33 +263,31 @@
                             highlightRow(0);
                         })
                         .catch(err => console.error("Fetch error:", err));
+                }
+            });
+
+            input.addEventListener('input', function (e) {
+                const token = input.value;
+
+                if (token === "") {
+                    stateDisplay.innerText = "q0";
+                    msgDisplay.innerText = "Aguardando...";
+                    highlightRow(0);
                     return;
                 }
 
-                if (key === "Backspace") {
-                    setTimeout(() => {
-                        if (input.value === "") {
-                            fetch('/api/reset').then(() => {
-                                stateDisplay.innerText = "q0";
-                                highlightRow(0);
-                            });
-                        }
-                    }, 10);
-                }
+                const formData = new FormData();
+                formData.append('action', 'live_check');
+                formData.append('token', token);
 
-                if (key.length === 1 && key.match(/[a-z]/i)) {
-                    const formData = new FormData();
-                    formData.append('action', 'step');
-                    formData.append('char', key);
-
-                    fetch('/api/process', { method: 'POST', body: formData })
-                        .then(res => res.json())
-                        .then(data => {
-                            const stLabel = data.state === -1 ? "ERR" : "q" + data.state;
-                            stateDisplay.innerText = stLabel;
-                            highlightRow(data.state);
-                        });
-                }
+                fetch('/api/process', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        const stLabel = data.state === -1 ? "ERRO" : "q" + data.state;
+                        stateDisplay.innerText = stLabel;
+                        msgDisplay.innerText = data.message;
+                        highlightRow(data.state);
+                    });
             });
 
             highlightRow(0);
