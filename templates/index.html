@@ -28,6 +28,35 @@
             {{end}}
         </tbody>
     </table>
+
+    <h3>Input Monitor</h3>
+    <input type="text" id="inputMain" placeholder="Type here..." autofocus>
+    <div id="statusDisplay">q0</div>
+
+    <script>
+        const input = document.getElementById('inputMain');
+        const display = document.getElementById('statusDisplay');
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === "Backspace") {
+                fetch('/reset').then(() => display.innerText = "q0");
+                return;
+            }
+
+            if (e.key.length === 1 && e.key.match(/[a-z]/i)) {
+                const formData = new FormData();
+                formData.append('char', e.key);
+
+                fetch('/process', { method: 'POST', body: formData })
+                    .then(res => res.json())
+                    .then(data => {
+                        display.innerText = (data.state === -1)
+                            ? "ERROR"
+                            : "q" + data.state;
+                    });
+            }
+        });
+    </script>
 </body>
 
 </html>

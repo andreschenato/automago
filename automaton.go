@@ -71,3 +71,20 @@ func (a *Automaton) GetTransitionDisplay(state int, char rune) string {
 	}
 	return "-"
 }
+
+func (a *Automaton) Step(char rune) int {
+	if a.CurrentState == a.ErrorState {
+		return a.ErrorState
+	}
+
+	if transitions, ok := a.TransitionTable[a.CurrentState]; ok {
+		if newState, exists := transitions[char]; exists {
+			a.CurrentState = newState
+			return newState
+		}
+	}
+	a.CurrentState = a.ErrorState
+	return a.ErrorState
+}
+
+func (a *Automaton) Reset() { a.CurrentState = 0 }
