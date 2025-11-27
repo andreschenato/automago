@@ -1,5 +1,9 @@
 # Automago - Analisador Léxico
-O Automago é um app web extremamente simples construído para o estudo de autômatos finitos em linguagens formais. Ele funciona em duas partes:
+O Automago é um app web extremamente simples construído para o estudo de autômatos finitos em linguagens formais. 
+
+Uma demo do site pode ser acessada em https://automago.andreschenato.dev.br.
+
+Ele funciona em duas partes:
 1. A construção da linguagem com palavras inputadas pelo usuário;
 2. O input de tokens para validar se estes são ou não aceitos pela linguagem.
 
